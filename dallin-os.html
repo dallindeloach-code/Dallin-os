@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dallin OS — Daily Execution System</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --surface: #111113;
+    --surface2: #18181c;
+    --surface3: #1e1e24;
+    --border: #2a2a32;
+    --border2: #3a3a45;
+    --gold: #c9a84c;
+    --gold2: #e8c96a;
+    --gold-dim: rgba(201,168,76,0.12);
+    --gold-dim2: rgba(201,168,76,0.06);
+    --text: #e8e8ec;
+    --text2: #9494a0;
+    --text3: #5a5a68;
+    --green: #4caf7d;
+    --green-dim: rgba(76,175,125,0.1);
+    --red: #e05a5a;
+    --red-dim: rgba(224,90,90,0.1);
+    --blue: #5a8ae0;
+    --blue-dim: rgba(90,138,224,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Subtle grid texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(201,168,76,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.015) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,10,11,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    height: 60px;
+  }
+
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nav-logo span {
+    color: var(--text3);
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+  }
+
+  .nav-tab {
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--text3);
+    transition: all 0.2s;
+  }
+
+  .nav-tab:hover { color: var(--text2); background: var(--surface2); }
+  .nav-tab.active { color: var(--gold); background: var(--gold-dim); }
+
+  .nav-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+  }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* LAYOUT */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* PAGE HEADER */
+  .page-header {
+    margin-bottom: 36px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .page-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  .page-title em {
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  .page-subtitle {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover { border-color: var(--border2); }
+
+  .card-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* GRID LAYOUTS */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .grid-7 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; }
+  .col-span-2 { grid-column: span 2; }
+  .col-span-3 { grid-column: span 3; }
+
+  /* DAILY 5 */
+  .daily5-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .daily5-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .daily5-item:first-child { padding-top: 0; }
+
+  .task-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--border2);
+    line-height: 1;
+    min-width: 32px;
+    transition: color 0.2s;
+    user-select: none;
+  }
+
+  .daily5-item.done .task-num { color: var(--gold); }
+
+  .task-content { flex: 1; }
+
+  .task-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    font-size: 17px;
+    font-weight: 400;
+    width: 100%;
+    transition: all 0.2s;
+  }
+
+  .task-input::placeholder { color: var(--text3); font-style: italic; }
+
+  .daily5-item.done .task-input {
+    text-decoration: line-through;
+    color: var(--text3);
+  }
+
+  .task-check {
+    width: 22px;
+    height: 22px;
+    border: 1.5px solid var(--border2);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+  }
+
+  .daily5-item.done .task-check {
+    background: var(--gold);
+    border-color: var(--gold);
+  }
+
+  .task-check::after {
+    content: '✓';
+    color: var(--bg);
+    font-size: 12px;
+    font-weight: 700;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .daily5-item.done .task-check::after { opacity: 1; }
+
+  /* WIN SCORE */
+  .win-bar {
+    height: 4px;
+    background: var(--surface3);
+    border-radius: 2px;
+    margin-top: 20px;
+    overflow: hidden;
+  }
+
+  .win-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold2));
+    border-radius: 2px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .win-label {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+  }
+
+  /* WEEKLY ANCHORS */
+  .anchor-domain {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .domain-icon {
+    font-size: 18px;
+    margin-bottom: 2px;
+  }
+
+  .domain-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 4px;
+  }
+
+  .anchor-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    font-size: 14px;
+    width: 100%;
+    outline: none;
+    resize: none;
+    min-height: 64px;
+    transition: border-color 0.2s;
+    line-height: 1.5;
+  }
+
+  .anchor-input:focus { border-color: var(--gold); }
+  .anchor-input::placeholder { color: var(--text3); font-style: italic; font-size: 13px; }
+
+  /* PRESENCE PERSON */
+  .presence-card {
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+    border: 1px solid var(--gold);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .presence-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+  }
+
+  .presence-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+
+  .presence-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border2);
+    outline: none;
+    color: var(--text);
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-style: italic;
+    width: 100%;
+    padding-bottom: 4px;
+  }
+
+  .presence-input::placeholder { color: var(--text3); }
+
+  /* STREAK */
+  .streak-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .streak-day {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0;
+  }
+
+  .streak-day.win {
+    background: var(--gold-dim);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .streak-day.today {
+    border-color: var(--gold2);
+    box-shadow: 0 0 0 2px rgba(201,168,76,0.2);
+  }
+
+  /* NORTH STAR */
+  .north-star-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--text2);
+    line-height: 1.7;
+    border-left: 2px solid var(--gold);
+    padding-left: 20px;
+  }
+
+  /* MANTRA */
+  .mantra-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    text-transform: uppercase;
+    line-height: 2;
+  }
+
+  /* REFLECTION */
+  .reflection-area {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    font-size: 15px;
+    width: 100%;
+    outline: none;
+    resize: vertical;
+    min-height: 80px;
+    transition: border-color 0.2s;
+    line-height: 1.6;
+  }
+
+  .reflection-area:focus { border-color: var(--border2); }
+  .reflection-area::placeholder { color: var(--text3); font-style: italic; }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 8px;
+  }
+
+  .gap-16 { display: flex; flex-direction: column; gap: 16px; }
+  .gap-12 { display: flex; flex-direction: column; gap: 12px; }
+  .gap-20 { display: flex; flex-direction: column; gap: 20px; }
+  .gap-24 { display: flex; flex-direction: column; gap: 24px; }
+  .mb-20 { margin-bottom: 20px; }
+  .mb-28 { margin-bottom: 28px; }
+
+  /* ======== ANNUAL CALENDAR ======== */
+  .month-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .month-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .month-header {
+    background: var(--surface2);
+    padding: 10px 14px;
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .month-header span {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+  }
+
+  .month-events {
+    padding: 10px;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .cal-event {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-family: 'Crimson Pro', serif;
+    cursor: default;
+  }
+
+  .cal-event.quarterly { background: rgba(201,168,76,0.12); color: var(--gold2); }
+  .cal-event.business { background: rgba(90,138,224,0.1); color: #8ab0f0; }
+  .cal-event.personal { background: rgba(76,175,125,0.1); color: #7dd4a0; }
+  .cal-event.family { background: rgba(224,130,90,0.1); color: #f0a878; }
+
+  .cal-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .quarterly .cal-dot { background: var(--gold); }
+  .business .cal-dot { background: #5a8ae0; }
+  .personal .cal-dot { background: var(--green); }
+  .family .cal-dot { background: #e08a5a; }
+
+  .add-event-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text3);
+    cursor: pointer;
+    border: 1px dashed var(--border);
+    background: transparent;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+    margin-top: 4px;
+  }
+
+  .add-event-btn:hover { color: var(--gold); border-color: var(--gold); background: var(--gold-dim2); }
+
+  /* EVENT MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 28px;
+    width: 400px;
+    max-width: 90vw;
+    transform: translateY(12px);
+    transition: transform 0.2s;
+  }
+
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  .modal-field { margin-bottom: 14px; }
+
+  .modal-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 6px;
+  }
+
+  .modal-input, .modal-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    font-size: 15px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .modal-input:focus, .modal-select:focus { border-color: var(--gold); }
+  .modal-select option { background: var(--surface2); }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: flex-end;
+  }
+
+  .btn {
+    padding: 9px 20px;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: var(--gold);
+    color: var(--bg);
+    font-weight: 500;
+  }
+
+  .btn-primary:hover { background: var(--gold2); }
+  
+  .btn-ghost {
+    background: transparent;
+    color: var(--text3);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+  }
+
+  /* STAT BOXES */
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .grid-7 { grid-template-columns: repeat(4, 1fr); }
+    .month-grid { grid-template-columns: repeat(2, 1fr); }
+    .col-span-2, .col-span-3 { grid-column: span 1; }
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .page.active .card {
+    animation: fadeUp 0.35s ease both;
+  }
+
+  .page.active .card:nth-child(1) { animation-delay: 0.05s; }
+  .page.active .card:nth-child(2) { animation-delay: 0.1s; }
+  .page.active .card:nth-child(3) { animation-delay: 0.15s; }
+  .page.active .card:nth-child(4) { animation-delay: 0.2s; }
+  .page.active .card:nth-child(5) { animation-delay: 0.25s; }
+
+  /* EDITABLE NORTH STAR */
+  [contenteditable] { outline: none; }
+  [contenteditable]:focus { border-color: var(--gold) !important; }
+
+  .delete-event {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    padding: 0 2px;
+  }
+
+  .cal-event:hover .delete-event { opacity: 1; }
+
+  /* QUARTER BADGE */
+  .q-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    background: var(--gold-dim);
+    color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.25);
+    margin-left: 8px;
+  }
+
+  /* IDENTITY SECTION */
+  .identity-line {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .identity-line:last-child { border-bottom: none; }
+
+  .identity-bullet {
+    color: var(--gold);
+    font-size: 20px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .identity-text {
+    font-family: 'Crimson Pro', serif;
+    font-size: 16px;
+    color: var(--text2);
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    DALLIN OS <span>/ Daily Execution System</span>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('daily')">Daily</button>
+    <button class="nav-tab" onclick="switchTab('weekly')">Weekly</button>
+    <button class="nav-tab" onclick="switchTab('annual')">Annual</button>
+    <button class="nav-tab" onclick="switchTab('identity')">Identity</button>
+  </div>
+  <div class="nav-date" id="navDate"></div>
+</nav>
+
+<!-- ===== DAILY PAGE ===== -->
+<div class="page active" id="page-daily">
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Today's <em>Win.</em></div>
+        <div class="page-subtitle">Five tasks. One focus. Show up fully.</div>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div class="stat-box">
+          <div class="stat-num" id="streakCount">0</div>
+          <div class="stat-label">Day Streak</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="weekWins">0</div>
+          <div class="stat-label">Week Wins</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2 mb-28">
+      <!-- DAILY 5 -->
+      <div class="card" style="grid-column: 1;">
+        <div class="card-label">The Daily 5</div>
+        <div id="daily5List">
+          <!-- rendered by JS -->
+        </div>
+        <div class="win-bar"><div class="win-fill" id="winFill" style="width:0%"></div></div>
+        <div class="win-label">
+          <span id="winText">0 of 5 complete</span>
+          <span id="winPct">0%</span>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div style="display:flex;flex-direction:column;gap:20px;">
+
+        <!-- PRESENCE PERSON -->
+        <div class="presence-card">
+          <div class="presence-icon">🤍</div>
+          <div style="flex:1;">
+            <div class="presence-label">Who Gets My Full Presence Today</div>
+            <input class="presence-input" id="presenceInput" placeholder="Name a person..." />
+          </div>
+        </div>
+
+        <!-- CEO MOVE -->
+        <div class="card">
+          <div class="card-label">CEO Move Today</div>
+          <div class="section-label">One high-leverage business action</div>
+          <input class="anchor-input" id="ceoMove" placeholder="The one thing that moves the business needle today..." style="min-height:52px;resize:none;" />
+        </div>
+
+        <!-- MORNING FRAME -->
+        <div class="card">
+          <div class="card-label">Morning Frame</div>
+          <div class="gap-12">
+            <div>
+              <div class="section-label">Intention for today</div>
+              <textarea class="reflection-area" id="morningIntent" placeholder="How do I want to show up today?" style="min-height:52px;"></textarea>
+            </div>
+            <div>
+              <div class="section-label">Evening reflection</div>
+              <textarea class="reflection-area" id="eveningReflect" placeholder="What went well? What do I carry into tomorrow?" style="min-height:52px;"></textarea>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- STREAK -->
+    <div class="card">
+      <div class="card-label">30-Day Win Streak</div>
+      <div class="streak-row" id="streakRow"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== WEEKLY PAGE ===== -->
+<div class="page" id="page-weekly">
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Weekly <em>Anchors.</em></div>
+        <div class="page-subtitle">One outcome per domain. This is your compass.</div>
+      </div>
+      <div>
+        <div class="section-label" style="text-align:right;">Week of</div>
+        <input type="text" id="weekOf" placeholder="e.g. May 26 – June 1" style="background:transparent;border:none;border-bottom:1px solid var(--border2);color:var(--text);font-family:'Playfair Display',serif;font-size:18px;outline:none;text-align:right;width:220px;" />
+      </div>
+    </div>
+
+    <div class="grid-7 mb-28" id="weeklyAnchors">
+      <!-- rendered by JS -->
+    </div>
+
+    <!-- WEEKLY CEO FOCUS -->
+    <div class="grid-2 mb-20">
+      <div class="card">
+        <div class="card-label">This Week's #1 Business Priority</div>
+        <textarea class="reflection-area" id="weekBizPriority" placeholder="What single business outcome would make this week a success?" style="min-height:80px;"></textarea>
+      </div>
+      <div class="card">
+        <div class="card-label">This Week's #1 Family Priority</div>
+        <textarea class="reflection-area" id="weekFamPriority" placeholder="What does winning look like for family this week?" style="min-height:80px;"></textarea>
+      </div>
+    </div>
+
+    <!-- WEEKLY REVIEW -->
+    <div class="card">
+      <div class="card-label">Weekly Review — Sunday Planning</div>
+      <div class="grid-3">
+        <div>
+          <div class="section-label">What went well this week?</div>
+          <textarea class="reflection-area" id="weekWentWell" placeholder="Wins, growth moments, proud of..."></textarea>
+        </div>
+        <div>
+          <div class="section-label">What needs to improve?</div>
+          <textarea class="reflection-area" id="weekImprove" placeholder="Gaps, missed, would do differently..."></textarea>
+        </div>
+        <div>
+          <div class="section-label">What carries into next week?</div>
+          <textarea class="reflection-area" id="weekCarry" placeholder="Unfinished, momentum items, commitments..."></textarea>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== ANNUAL CALENDAR PAGE ===== -->
+<div class="page" id="page-annual">
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Master <em>Annual Calendar.</em></div>
+        <div class="page-subtitle" id="calYear">2026 — CEO View</div>
+      </div>
+      <button class="btn btn-primary" onclick="openModal()">+ Add Event</button>
+    </div>
+
+    <div class="legend mb-20">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--gold);"></div> Quarterly Planning</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#5a8ae0;"></div> Business</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green);"></div> Personal / Health</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e08a5a;"></div> Family / Travel</div>
+    </div>
+
+    <div class="month-grid" id="monthGrid">
+      <!-- rendered by JS -->
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== IDENTITY PAGE ===== -->
+<div class="page" id="page-identity">
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Who I <em>Am.</em></div>
+        <div class="page-subtitle">North Star · Mantras · Identity</div>
+      </div>
+    </div>
+
+    <div class="grid-2 mb-20">
+      <!-- NORTH STAR -->
+      <div class="card col-span-2">
+        <div class="card-label">North Star Statement</div>
+        <div class="north-star-text" contenteditable="true" id="northStar">
+          I am a disciplined and focused man who leads his family with love, builds businesses that create freedom, and relentlessly pursues becoming the best version of himself — in faith, health, relationships, and wealth.
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2 mb-20">
+      <!-- MANTRAS -->
+      <div class="card">
+        <div class="card-label">Core Mantras</div>
+        <div class="gap-12" id="mantrasContainer">
+          <!-- rendered by JS -->
+        </div>
+        <button class="add-event-btn" onclick="addMantra()" style="margin-top:12px;">+ Add Mantra</button>
+      </div>
+
+      <!-- IDENTITY STATEMENTS -->
+      <div class="card">
+        <div class="card-label">I Am Statements</div>
+        <div id="identityStatements">
+          <!-- rendered by JS -->
+        </div>
+        <button class="add-event-btn" onclick="addIdentity()" style="margin-top:12px;">+ Add Statement</button>
+      </div>
+    </div>
+
+    <!-- 7 DOMAINS -->
+    <div class="card">
+      <div class="card-label">7 Life Domains — Current 90-Day Rocks</div>
+      <div class="grid-7" id="domainsRocks">
+        <!-- rendered by JS -->
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title">Add Event</div>
+    <div class="modal-field">
+      <div class="modal-label">Event Name</div>
+      <input class="modal-input" id="modalName" placeholder="e.g. Q2 Quarterly Planning" />
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Month</div>
+      <select class="modal-select" id="modalMonth">
+        <option value="0">January</option><option value="1">February</option>
+        <option value="2">March</option><option value="3">April</option>
+        <option value="4">May</option><option value="5">June</option>
+        <option value="6">July</option><option value="7">August</option>
+        <option value="8">September</option><option value="9">October</option>
+        <option value="10">November</option><option value="11">December</option>
+      </select>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Category</div>
+      <select class="modal-select" id="modalCat">
+        <option value="quarterly">Quarterly Planning</option>
+        <option value="business">Business</option>
+        <option value="personal">Personal / Health</option>
+        <option value="family">Family / Travel</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEvent()">Add Event</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================
+// STATE
+// =====================
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DOMAINS = [
+  { icon:'🦷', name:'Career & Business' },
+  { icon:'💪', name:'Health & Fitness' },
+  { icon:'👨‍👩‍👧‍👦', name:'Family & Marriage' },
+  { icon:'💰', name:'Finance & Wealth' },
+  { icon:'📚', name:'Personal Growth' },
+  { icon:'✈️', name:'Travel & Adventure' },
+  { icon:'🙏', name:'Faith & Spirit' },
+];
+
+let state = loadState();
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('dallinOS');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return {
+    tasks: ['','','','',''],
+    done: [false,false,false,false,false],
+    presence: '',
+    ceoMove: '',
+    morningIntent: '',
+    eveningReflect: '',
+    weekOf: '',
+    weeklyAnchors: ['','','','','','',''],
+    weekBizPriority: '',
+    weekFamPriority: '',
+    weekWentWell: '',
+    weekImprove: '',
+    weekCarry: '',
+    northStar: '',
+    mantras: ['Disciplined & Focused.','Win the day. Stack the days.','Lead with love. Execute with precision.'],
+    identity: ['I am a present father who shows up fully.','I am a CEO who leads by example.','I am building a legacy, not just a living.','I honor my body through consistent discipline.','I am a faithful man who leads from abundance.'],
+    domainRocks: ['','','','','','',''],
+    events: getDefaultEvents(),
+    streak: {},
+    lastDate: ''
+  };
+}
+
+function getDefaultEvents() {
+  return [
+    { name:'Q1 Quarterly Planning', month:0, cat:'quarterly' },
+    { name:'Q2 Quarterly Planning', month:3, cat:'quarterly' },
+    { name:'Q3 Quarterly Planning', month:6, cat:'quarterly' },
+    { name:'Q4 Quarterly Planning', month:9, cat:'quarterly' },
+    { name:'Annual Vision Day', month:11, cat:'quarterly' },
+  ];
+}
+
+function saveState() {
+  try { localStorage.setItem('dallinOS', JSON.stringify(state)); } catch(e) {}
+}
+
+// =====================
+// NAV
+// =====================
+function switchTab(tab) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById('page-' + tab).classList.add('active');
+}
+
+// =====================
+// DATE
+// =====================
+function initDate() {
+  const now = new Date();
+  const opts = { weekday:'long', month:'long', day:'numeric', year:'numeric' };
+  document.getElementById('navDate').textContent = now.toLocaleDateString('en-US', opts);
+  document.getElementById('calYear').textContent = now.getFullYear() + ' — CEO View';
+
+  const today = now.toISOString().slice(0,10);
+  if (state.lastDate !== today) {
+    // new day — reset tasks but keep streak
+    if (state.lastDate && countDone() === 5) {
+      state.streak[state.lastDate] = true;
+    }
+    state.lastDate = today;
+    state.tasks = ['','','','',''];
+    state.done = [false,false,false,false,false];
+    state.presence = '';
+    state.ceoMove = '';
+    state.morningIntent = '';
+    state.eveningReflect = '';
+    saveState();
+  }
+}
+
+function countDone() { return state.done.filter(Boolean).length; }
+
+// =====================
+// DAILY 5
+// =====================
+function renderDaily5() {
+  const list = document.getElementById('daily5List');
+  list.innerHTML = '';
+  state.tasks.forEach((task, i) => {
+    const done = state.done[i];
+    const item = document.createElement('div');
+    item.className = 'daily5-item' + (done ? ' done' : '');
+    item.innerHTML = `
+      <div class="task-num">${i+1}</div>
+      <div class="task-content">
+        <input class="task-input" placeholder="Task ${i+1}..." value="${escHtml(task)}" 
+          onchange="updateTask(${i}, this.value)" oninput="updateTask(${i}, this.value)" />
+      </div>
+      <div class="task-check" onclick="toggleTask(${i})"></div>
+    `;
+    list.appendChild(item);
+  });
+  updateWinBar();
+}
+
+function updateTask(i, val) {
+  state.tasks[i] = val;
+  saveState();
+}
+
+function toggleTask(i) {
+  state.done[i] = !state.done[i];
+  saveState();
+  renderDaily5();
+  updateStreak();
+}
+
+function updateWinBar() {
+  const done = countDone();
+  const pct = Math.round((done / 5) * 100);
+  document.getElementById('winFill').style.width = pct + '%';
+  document.getElementById('winText').textContent = `${done} of 5 complete`;
+  document.getElementById('winPct').textContent = pct + '%';
+}
+
+// =====================
+// STREAK
+// =====================
+function renderStreak() {
+  const row = document.getElementById('streakRow');
+  row.innerHTML = '';
+  const today = new Date();
+  let streak = 0;
+  let weekWins = 0;
+
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0,10);
+    const isToday = i === 0;
+    const isWin = state.streak[key] || (isToday && countDone() === 5);
+    const dayLabel = d.toLocaleDateString('en-US',{weekday:'narrow'}) + '\n' + d.getDate();
+
+    if (isWin) { streak++; if (i < 7) weekWins++; }
+    else if (i > 0) streak = 0;
+
+    const el = document.createElement('div');
+    el.className = 'streak-day' + (isWin ? ' win' : '') + (isToday ? ' today' : '');
+    el.title = key;
+    el.textContent = d.getDate();
+    row.appendChild(el);
+  }
+
+  document.getElementById('streakCount').textContent = streak;
+  document.getElementById('weekWins').textContent = weekWins;
+}
+
+function updateStreak() {
+  if (countDone() === 5) {
+    state.streak[state.lastDate] = true;
+    saveState();
+  }
+  renderStreak();
+}
+
+// =====================
+// WEEKLY ANCHORS
+// =====================
+function renderWeeklyAnchors() {
+  const container = document.getElementById('weeklyAnchors');
+  container.innerHTML = '';
+  DOMAINS.forEach((d, i) => {
+    const div = document.createElement('div');
+    div.className = 'card anchor-domain';
+    div.innerHTML = `
+      <div class="domain-icon">${d.icon}</div>
+      <div class="domain-name">${d.name}</div>
+      <textarea class="anchor-input" placeholder="This week's outcome..." 
+        onchange="updateAnchor(${i}, this.value)" oninput="updateAnchor(${i}, this.value)">${escHtml(state.weeklyAnchors[i])}</textarea>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function updateAnchor(i, val) {
+  state.weeklyAnchors[i] = val;
+  saveState();
+}
+
+// =====================
+// ANNUAL CALENDAR
+// =====================
+function renderCalendar() {
+  const grid = document.getElementById('monthGrid');
+  grid.innerHTML = '';
+  const now = new Date();
+
+  MONTHS.forEach((month, mi) => {
+    const isPast = mi < now.getMonth();
+    const isCurrent = mi === now.getMonth();
+    const card = document.createElement('div');
+    card.className = 'month-card';
+    card.style.opacity = isPast ? '0.55' : '1';
+
+    const qLabel = mi % 3 === 0 ? `<span class="q-badge">Q${Math.floor(mi/3)+1}</span>` : '';
+
+    let eventsHtml = '';
+    state.events.filter(e => e.month === mi).forEach((ev, ei) => {
+      const realIdx = state.events.findIndex(e => e.month === mi && e.name === ev.name);
+      eventsHtml += `
+        <div class="cal-event ${ev.cat}">
+          <div class="cal-dot"></div>
+          <span>${ev.name}</span>
+          <button class="delete-event" onclick="deleteEvent(${realIdx})">✕</button>
+        </div>`;
+    });
+
+    card.innerHTML = `
+      <div class="month-header" style="${isCurrent ? 'border-left:2px solid var(--gold);' : ''}">
+        ${month} ${qLabel}
+        <span>${now.getFullYear()}</span>
+      </div>
+      <div class="month-events">
+        ${eventsHtml}
+        <button class="add-event-btn" onclick="openModal(${mi})">+ Add</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+let modalTargetMonth = null;
+
+function openModal(month) {
+  modalTargetMonth = month !== undefined ? month : null;
+  if (month !== undefined) document.getElementById('modalMonth').value = month;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.getElementById('modalName').value = '';
+}
+
+function saveEvent() {
+  const name = document.getElementById('modalName').value.trim();
+  const month = parseInt(document.getElementById('modalMonth').value);
+  const cat = document.getElementById('modalCat').value;
+  if (!name) return;
+  state.events.push({ name, month, cat });
+  saveState();
+  closeModal();
+  renderCalendar();
+}
+
+function deleteEvent(idx) {
+  state.events.splice(idx, 1);
+  saveState();
+  renderCalendar();
+}
+
+// =====================
+// IDENTITY
+// =====================
+function renderIdentity() {
+  // North star
+  if (state.northStar) document.getElementById('northStar').textContent = state.northStar;
+  document.getElementById('northStar').addEventListener('input', function() {
+    state.northStar = this.textContent;
+    saveState();
+  });
+
+  // Mantras
+  renderMantras();
+
+  // Identity statements
+  renderIdentityStatements();
+
+  // Domain rocks
+  renderDomainRocks();
+}
+
+function renderMantras() {
+  const c = document.getElementById('mantrasContainer');
+  c.innerHTML = '';
+  state.mantras.forEach((m, i) => {
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.alignItems = 'center';
+    div.style.gap = '10px';
+    div.innerHTML = `
+      <div style="color:var(--gold);font-size:16px;flex-shrink:0;">—</div>
+      <input class="anchor-input" value="${escHtml(m)}" 
+        style="min-height:unset;padding:8px 10px;font-size:13px;letter-spacing:0.05em;"
+        onchange="updateMantra(${i}, this.value)" oninput="updateMantra(${i}, this.value)" />
+      <button onclick="removeMantra(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;flex-shrink:0;">✕</button>
+    `;
+    c.appendChild(div);
+  });
+}
+
+function addMantra() {
+  state.mantras.push('');
+  saveState();
+  renderMantras();
+}
+
+function removeMantra(i) {
+  state.mantras.splice(i, 1);
+  saveState();
+  renderMantras();
+}
+
+function updateMantra(i, val) {
+  state.mantras[i] = val;
+  saveState();
+}
+
+function renderIdentityStatements() {
+  const c = document.getElementById('identityStatements');
+  c.innerHTML = '';
+  state.identity.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'identity-line';
+    div.innerHTML = `
+      <div class="identity-bullet">·</div>
+      <input style="background:transparent;border:none;outline:none;color:var(--text2);font-family:'Crimson Pro',serif;font-size:16px;font-style:italic;width:100%;" 
+        value="${escHtml(s)}" onchange="updateIdentity(${i}, this.value)" oninput="updateIdentity(${i}, this.value)" />
+      <button onclick="removeIdentity(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;">✕</button>
+    `;
+    c.appendChild(div);
+  });
+}
+
+function addIdentity() {
+  state.identity.push('');
+  saveState();
+  renderIdentityStatements();
+}
+
+function removeIdentity(i) {
+  state.identity.splice(i, 1);
+  saveState();
+  renderIdentityStatements();
+}
+
+function updateIdentity(i, val) {
+  state.identity[i] = val;
+  saveState();
+}
+
+function renderDomainRocks() {
+  const c = document.getElementById('domainsRocks');
+  c.innerHTML = '';
+  DOMAINS.forEach((d, i) => {
+    const div = document.createElement('div');
+    div.className = 'card anchor-domain';
+    div.innerHTML = `
+      <div class="domain-icon">${d.icon}</div>
+      <div class="domain-name">${d.name}</div>
+      <textarea class="anchor-input" placeholder="90-day rock..." 
+        onchange="updateRock(${i}, this.value)" oninput="updateRock(${i}, this.value)">${escHtml(state.domainRocks[i])}</textarea>
+    `;
+    c.appendChild(div);
+  });
+}
+
+function updateRock(i, val) {
+  state.domainRocks[i] = val;
+  saveState();
+}
+
+// =====================
+// BIND SIMPLE INPUTS
+// =====================
+function bindInputs() {
+  const bindings = [
+    ['presenceInput','presence'],
+    ['ceoMove','ceoMove'],
+    ['morningIntent','morningIntent'],
+    ['eveningReflect','eveningReflect'],
+    ['weekOf','weekOf'],
+    ['weekBizPriority','weekBizPriority'],
+    ['weekFamPriority','weekFamPriority'],
+    ['weekWentWell','weekWentWell'],
+    ['weekImprove','weekImprove'],
+    ['weekCarry','weekCarry'],
+  ];
+  bindings.forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = state[key] || '';
+    el.addEventListener('input', () => { state[key] = el.value; saveState(); });
+    el.addEventListener('change', () => { state[key] = el.value; saveState(); });
+  });
+}
+
+// =====================
+// UTIL
+// =====================
+function escHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// =====================
+// INIT
+// =====================
+function init() {
+  initDate();
+  renderDaily5();
+  renderStreak();
+  renderWeeklyAnchors();
+  renderCalendar();
+  renderIdentity();
+  bindInputs();
+}
+
+init();
+</script>
+</body>
+</html>
